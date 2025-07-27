@@ -101,8 +101,8 @@ modified configuration file.
 
 From the output, copy the audit capabilities that interest you into your AI agent’s `<mcp-config>.json` file.
 
-### 3. (Optional) Automate injecting secrets from environment variables
-To provide secure credential management in the MCP servers, you can automate fetching them from various providers and injecting as environment variables before starting the MCP server. For more details, see the [Agent Guard CLI](../agent_guard_core/cli.md).
+### 3. (Optional) Automate injecting secrets into environment variables
+To provide secure credential management in the MCP servers, you can automate fetching the credentials from your secrets manager and injecting into your environment variables before starting the MCP server. For more details, see the [Agent Guard CLI](../agent_guard_core/cli.md).
 
 For example
 
