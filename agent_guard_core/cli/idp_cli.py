@@ -24,8 +24,9 @@ def idp_login():
 )
 @click.option(
     '--app-id',
-    help='The application ID in the IDP',
-    required=True
+    help='The application ID in the IDP (Default: "__agentguard")',
+    required=False,
+    default="__agentguard"
 )
 def login(domain: str, client_id: str, app_id: str):
     """Login to the IDP and obtain access tokens."""
