@@ -1,6 +1,19 @@
 # Secure Infrastructure Access (SIA) + CyberArk Identity
-
 Agent Guard SIA allows you to generate sia-enabled postgres connection strings using stored OAuth credentials.
+
+## Table of Contents
+
+- [Step 1: Create an Agent Guard WebApp in CyberArk Identity Administration](#step-1-create-an-agent-guard-webapp-in-cyberark-identity-administration)
+- [Step 2: Setup OpenID Connect web app](#step-2-setup-openid-connect-web-app)
+    - [Settings](#settings)
+    - [Trust](#trust)
+    - [Tokens](#tokens)
+    - [Scope](#scope)
+    - [Permissions](#permissions)
+- [Step 3: Log in through the Agent Guard CLI](#step-3-log-in-through-the-agent-guard-cli)
+- [Step 4: Generate SIA Postgres connection string](#step-4-generate-sia-postgres-connection-string)
+- [Example](#example)
+
 
 ## Step 1: Create an Agent Guard WebApp in CyberArk Identity Administration
 On the menu to the left, Navigate to **Apps & Widgets** --> **Web Apps**
@@ -133,3 +146,21 @@ agc sia postgres generate -u 'john_doe@cyberark.cloud.12345' -t acme -h data-int
 </p>
 
 A JIT connection string will be printed to your screen - use this connection string with a Postgres client to securely connect to your database.
+
+## Example
+First, make sure you are logged in:
+
+```bash
+agc idp login --domain akf1234.id.cyberark.cloud --client-id 1015e2a5-db67-4c34-b244-b3962eefffff
+```
+
+Next, store the connection string inside an environment variable
+
+```bash
+export SIA_CONNSTR="agc sia postgres generate -u 'john_doe@cyberark.cloud.12345' -t acme -h data-integration-test.cluster-c3lw4xf6ffffus-east-1.rds.amazonaws.com"
+```
+
+Then, Run a postgres MCP server:
+```bash
+npx -y @modelcontextprotocol/server-postgres $SIA_CONNSTR
+```
