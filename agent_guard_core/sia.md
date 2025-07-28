@@ -121,6 +121,13 @@ agc sia postgres generate -u '<USERNAME>' -t <TENANT_ID> -h <SIA DATABASE FQDN>
 
 **SIA DATABASE FQDN** is the FQDN (Retrieve it from Secure Infrastructure Access -> Resource Management)
 
+A complete command would look like this:
+
+```bash
+agc sia postgres generate -u 'john_doe@cyberark.cloud.12345' -t acme -h data-integration-test.cluster-c3lw4xf6ffffus-east-1.rds.amazonaws.com
+```
+
+
 <p style="text-align: center;">
     <img src="../resources/sia/database.png" width="50%"/>
 </p>
