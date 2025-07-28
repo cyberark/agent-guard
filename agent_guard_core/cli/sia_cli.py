@@ -8,15 +8,21 @@ import click
 from agent_guard_core.api.identity.handler import IdentityConfig, IdentityHandler
 from agent_guard_core.api.sia.handler import SecureInfraAccessHandler
 from agent_guard_core.cli.mcp_proxy_cli import ProxyCapability, _stdio_mcp_proxy_async
+from agent_guard_core.utils.env import CYBERARK_DOMAIN
 
 logger = logging.getLogger(__name__)
 
-@click.group(name="sia-postgresdb", help="Connect to PostgreSQL databases using SIA")
+@click.group(name="sia", help="Connect to PostgreSQL databases using SIA")
+def sia():
+    """Commands for managing Secure Infrastructure Access PostgreSQL connections."""
+    pass
+
+@sia.group(name="postgres", help="PostgreSQL connectivity using sia")
 def sia_postgresdb():
     """Commands for managing Secure Infrastructure Access PostgreSQL connections."""
     pass
 
-@sia_postgresdb.command(name="connect", help="Connect to a PostgreSQL database using SIA credentials")
+@sia_postgresdb.command(name="generate", help="Generate a connection string for PostgreSQL using SIA credentials")
 @click.option(
     '--username',
     '-u',
@@ -46,13 +52,13 @@ def sia_postgresdb():
     is_flag=True,
     help="Enable debug logging"
 )
-def connect(username: str, tenant_id: str, db_host: str, database: str, debug: bool = False):
+def generate(username: str, tenant_id: str, db_host: str, database: str, debug: bool = False):
     """Connect to a PostgreSQL database using Secure Infrastructure Access authentication."""
     if debug:
         logging.disable(logging.NOTSET)
         
     identity_handler = IdentityHandler()
-    if not identity_handler.access_token:
+    if identity_handler.access_token is None:
         raise click.ClickException(
             "No valid login session found. Please run 'agc idp login' first."
         )
@@ -61,25 +67,16 @@ def connect(username: str, tenant_id: str, db_host: str, database: str, debug: b
         # Initialize SIA handler and get credentials
         sia_handler = SecureInfraAccessHandler(tenant_id=tenant_id, 
                                                access_token=identity_handler.access_token)
-        password = sia_handler.get_short_lived_password()
         
+        password = sia_handler.get_short_lived_password()
         # Construct the connection string
         # Format: postgresql://<username>#<tenant_id>@<host>:<password>@<host>/<database>
         sia_username = f"{username}#{tenant_id}@{db_host}"
-        target_host = f"{tenant_id}.postgres.integration-cyberark.cloud"
+        target_host = f"{tenant_id}.postgres.{CYBERARK_DOMAIN}"
 
         connection_string = f"postgresql://{target_host}:5432/{database}?user={quote_plus(sia_username)}&password={quote_plus(password)}&sslmode=require"
-
-        logger.debug(f"Starting Postgres MCP server for database: {database} on host: {db_host}")
-
-        # Run the postgres MCP server through the proxy
-        argv = ("uvx", "postgres-mcp", "--access-mode=restricted", connection_string))
-        asyncio.run(_stdio_mcp_proxy_async(
-            argv=argv,
-            cap=[ProxyCapability.AUDIT],
-            secret_uris=[],
-            is_debug=debug
-        ))
+        #connection_string = f"postgresql://{quote_plus(sia_username)}:{quote_plus(password)}@{target_host}:5432/{database}"
+        print(connection_string)
         
     except Exception as e:
-        raise click.ClickException(f"Failed to start Postgres MCP server: {str(e)}")
+        raise click.ClickException(f"Failed to generate postgres connection string: {str(e)}")

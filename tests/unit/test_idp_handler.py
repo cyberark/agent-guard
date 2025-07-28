@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agent_guard_core.handlers.idp.handler import IDPConfig, OIDCLogin
+from agent_guard_core.api.identity.handler import IdentityConfig, IdentityHandler
 
 # Assuming the original code is in a module called oidc_login
 # from oidc_login import OIDCLogin, IDPConfig
@@ -17,7 +17,7 @@ from agent_guard_core.handlers.idp.handler import IDPConfig, OIDCLogin
 @pytest.fixture
 def sample_config():
     """Fixture providing a sample IDP configuration."""
-    return IDPConfig(
+    return IdentityConfig(
         domain="test-domain.auth0.com",
         client_id="test-client-id",
         redirect_uri="http://localhost:8000/callback",
@@ -45,7 +45,7 @@ class TestIDPConfig:
     
     def test_idp_config_creation(self):
         """Test creating IDPConfig with required fields."""
-        config = IDPConfig(
+        config = IdentityConfig(
             domain="test.auth0.com",
             client_id="client123"
         )
@@ -60,7 +60,7 @@ class TestIDPConfig:
     
     def test_idp_config_with_custom_values(self):
         """Test creating IDPConfig with custom values."""
-        config = IDPConfig(
+        config = IdentityConfig(
             domain="custom.auth0.com",
             client_id="custom-client",
             redirect_uri="http://localhost:3000/auth",
@@ -89,7 +89,7 @@ class TestOIDCLogin:
         mock_pkce.return_value = ("verifier", "challenge")
         mock_keyring.return_value = None
         
-        oidc = OIDCLogin(sample_config)
+        oidc = IdentityHandler(sample_config)
         
         assert oidc._config == sample_config
         assert oidc._code_verifier == "verifier"
@@ -106,7 +106,7 @@ class TestOIDCLogin:
         mock_pkce.return_value = ("verifier", "challenge")
         mock_keyring.return_value = json.dumps(sample_tokens)
         
-        oidc = OIDCLogin(sample_config)
+        oidc = IdentityHandler(sample_config)
         
         assert oidc._tokens == sample_tokens
         mock_keyring.assert_called_once_with("test-service", "test-client-id")
@@ -116,7 +116,7 @@ class TestOIDCLogin:
     def test_save_tokens_to_keyring(self, mock_keyring, sample_config, sample_tokens):
         """Test saving tokens to keyring."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             oidc._tokens = sample_tokens
             
             oidc._save_tokens_to_keyring()
@@ -131,7 +131,7 @@ class TestOIDCLogin:
         """Test saving empty tokens to keyring does nothing."""
         with patch('keyring.get_password', return_value=None), \
              patch('keyring.set_password') as mock_keyring:
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             oidc._tokens = {}
             
             oidc._save_tokens_to_keyring()
@@ -148,7 +148,7 @@ class TestOIDCLogin:
         mock_thread.return_value = mock_thread_instance
         
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             thread = oidc._start_local_server()
             
             mock_server.assert_called_once_with(("", 8000), unittest.mock.ANY)
@@ -166,12 +166,12 @@ class TestOIDCLogin:
         
         with patch('keyring.get_password', return_value=None), \
              patch('keyring.set_password') as mock_keyring, \
-             patch.object(OIDCLogin, '_start_local_server') as mock_server:
+             patch.object(IdentityHandler, '_start_local_server') as mock_server:
             
             mock_thread = Mock()
             mock_server.return_value = mock_thread
             
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             oidc._auth_code = "test-auth-code"  # Simulate receiving auth code
             
             oidc.login()
@@ -202,7 +202,7 @@ class TestOIDCLogin:
     def test_login_with_existing_tokens_no_force(self, sample_config, sample_tokens):
         """Test login with existing tokens and force=False."""
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             result = oidc.login(force=False)
             
@@ -212,12 +212,12 @@ class TestOIDCLogin:
         """Test login flow when auth code is not received."""
         with patch('keyring.get_password', return_value=None), \
              patch('webbrowser.open'), \
-             patch.object(OIDCLogin, '_start_local_server') as mock_server:
+             patch.object(IdentityHandler, '_start_local_server') as mock_server:
             
             mock_thread = Mock()
             mock_server.return_value = mock_thread
             
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             # Don't set auth_code to simulate missing code
             
             with pytest.raises(Exception, match="Did not receive authorization code"):
@@ -232,12 +232,12 @@ class TestOIDCLogin:
         
         with patch('keyring.get_password', return_value=None), \
              patch('webbrowser.open'), \
-             patch.object(OIDCLogin, '_start_local_server') as mock_server:
+             patch.object(IdentityHandler, '_start_local_server') as mock_server:
             
             mock_thread = Mock()
             mock_server.return_value = mock_thread
             
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             oidc._auth_code = "test-auth-code"
             
             with pytest.raises(Exception, match="Token exchange failed"):
@@ -254,7 +254,7 @@ class TestOIDCLogin:
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)), \
              patch('keyring.set_password') as mock_keyring:
             
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             result = oidc.refresh_token()
             
             mock_post.assert_called_once_with(
@@ -278,7 +278,7 @@ class TestOIDCLogin:
         tokens_without_refresh = {"access_token": "test-token"}
         
         with patch('keyring.get_password', return_value=json.dumps(tokens_without_refresh)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             with pytest.raises(Exception, match="No refresh token available"):
                 oidc.refresh_token()
@@ -286,7 +286,7 @@ class TestOIDCLogin:
     def test_refresh_token_no_tokens(self, sample_config):
         """Test refresh token when no tokens exist."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             with pytest.raises(Exception, match="No refresh token available"):
                 oidc.refresh_token()
@@ -299,7 +299,7 @@ class TestOIDCLogin:
         mock_post.return_value = mock_response
         
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             with pytest.raises(Exception, match="Refresh failed"):
                 oidc.refresh_token()
@@ -307,49 +307,49 @@ class TestOIDCLogin:
     def test_access_token_property(self, sample_config, sample_tokens):
         """Test access_token property."""
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.access_token == "test-access-token"
     
     def test_access_token_property_no_tokens(self, sample_config):
         """Test access_token property when no tokens exist."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.access_token is None
     
     def test_id_token_property(self, sample_config, sample_tokens):
         """Test id_token property."""
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.id_token == "test-id-token"
     
     def test_id_token_property_no_tokens(self, sample_config):
         """Test id_token property when no tokens exist."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.id_token is None
     
     def test_refresh_token_value_property(self, sample_config, sample_tokens):
         """Test refresh_token_value property."""
         with patch('keyring.get_password', return_value=json.dumps(sample_tokens)):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.refresh_token_value == "test-refresh-token"
     
     def test_refresh_token_value_property_no_tokens(self, sample_config):
         """Test refresh_token_value property when no tokens exist."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             assert oidc.refresh_token_value is None
     
     def test_authorization_url_with_audience_and_resource(self, sample_config):
         """Test that authorization URL includes audience and resource when provided."""
         with patch('keyring.get_password', return_value=None), \
              patch('webbrowser.open') as mock_browser, \
-             patch.object(OIDCLogin, '_start_local_server') as mock_server:
+             patch.object(IdentityHandler, '_start_local_server') as mock_server:
             
             mock_thread = Mock()
             mock_server.return_value = mock_thread
             
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             oidc._auth_code = "test-code"
             
             with patch('requests.post') as mock_post:
@@ -370,7 +370,7 @@ class TestAuthHandler:
     def test_auth_handler_with_code(self, sample_config):
         """Test AuthHandler when receiving valid authorization code."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             # Create a mock request with code parameter
             mock_request = Mock()
@@ -397,7 +397,7 @@ class TestAuthHandler:
     def test_auth_handler_without_code(self, sample_config):
         """Test AuthHandler when not receiving authorization code."""
         with patch('keyring.get_password', return_value=None):
-            oidc = OIDCLogin(sample_config)
+            oidc = IdentityHandler(sample_config)
             
             # Create a mock request without code parameter
             mock_request = Mock()
