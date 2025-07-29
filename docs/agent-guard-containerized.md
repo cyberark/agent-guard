@@ -1,4 +1,3 @@
-
 # Agent Guard for AI Agents (Containerized)
 
 - [Overview](#overview)
@@ -9,39 +8,54 @@
 
 ## Overview
 
-CyberArk's Agent Guard is an AI agent security tool supporting secure secret retrieval for agents managed via external secret providers such as AWS Secrets Manager and CyberArk Secrets Manager (prevfiously CyberArk Conjur).Conjur Open Source, and traceability of AI agent MCP communications via the Agent Guard’s MCP Proxy.
+CyberArk's Agent Guard is an AI agent security tool supporting secure secret retrieval for agents managed via external secret providers such as AWS Secrets Manager and CyberArk Secrets Manager (previously CyberArk Conjur), Conjur Open Source, and traceability of AI agent MCP communications via the Agent Guard's MCP Proxy.
 
 The tool uses the [Agent Guard CLI](../agent_guard_core/cli.md).
 
-The Agent Guard Docker image is available from the Amazon ECR which is accessible through the AWS Marketplace.
+The Agent Guard Docker image is available from Amazon ECR, accessible through the AWS Marketplace.
 
-## Before you begin
+## Prerequisites
 
-### 1. Make sure that:
+Before you begin, ensure you have:
 
-- You're authenticated to AWS and you've set up the following environment variables for AWS authentication, including their values, in your CLI:
+- A working Docker setup
+- AWS CLI installed and configured
+- Access to the Agent Guard image through AWS Marketplace
 
-   #### Example
+## Setup Instructions
 
+### Step 1: Configure AWS Authentication
+
+Set up the following environment variables for AWS authentication in your CLI:
+
+```
+export AWS_ACCESS_KEY_ID="your-aws-access-id"
+export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+export AWS_SESSION_TOKEN="your-aws-token" 
+export AWS_REGION="your-region"
+```
+
+### Step 2: Authenticate with Amazon ECR
+
+Log in to AWS ECR to access the Agent Guard image repository:
+
+```bash
+aws ecr get-login-password --region <your-aws-region> | docker login --username AWS --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
+```
+
+### Step 3: Pull and Set Up the Agent Guard Container
+
+1. Pull the Agent Guard Docker image from Amazon ECR:
    ```
-   export AWS_ACCESS_KEY_ID="your-aws-access-id"
-   export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
-   export AWS_SESSION_TOKEN="your-aws-token" 
-   export AWS_REGION="your-region"  
+   docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4
    ```
-- You have a working Docker setup
-- You've downloaded the Agent Guard Docker image, `<name of image>`, from the AWS Marketplace
 
-### 2. Set up the Agent Guard container
+2. Tag the image locally for easier reference:
+   ```
+   docker tag 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4 agc
+   ```
 
-1. Pull the Agent Guard Docker image (**agc**) from the Amazon ECR.
-```
-docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4
-```
-2. Tag the image locally: 
-```
-docker tag 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4 agc
-```
+You're now ready to use the Agent Guard container with the local tag `agc`.
 
 ## Audit and monitor with the MCP Proxy
 CyberArk's Agent Guard MCP Proxy is an AI agent security tool built for developers and has full auditing and monitoring capabilities. Every interaction between the AI agent and your MCP servers is logged, providing complete traceability and compliance with enterprise security standards.
