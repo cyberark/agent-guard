@@ -36,11 +36,11 @@ The Agent Guard Docker image is available from the Amazon ECR which is accessibl
 
 1. Pull the Agent Guard Docker image (**agc**) from the Amazon ECR.
 ```
-docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:1.0.1
+docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4
 ```
 2. Tag the image locally: 
 ```
-docker tag 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:1.0.1 agc
+docker tag 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:v1.0.4 agc
 ```
 
 ## Audit and monitor with the MCP Proxy
