@@ -55,6 +55,15 @@ def get_secrets_from_env_option(f) -> Any:
              "Example: MY_ENV_VAR=conjur://mysecret"
     )(f)
 
+def audit_log_file_option(f) -> Any:
+    return click.option(
+        '--audit-log-file',
+        '-al',
+        type=str,
+        required=False,
+        help="Path to the audit log file. If not provided, will use default location (/logs/ or current directory)"
+    )(f)
+
 @click.group(help="Commands to manage Agent Guard MCP proxy.")
 def mcp_proxy() -> Any:
     pass
@@ -72,11 +81,13 @@ def mcp_proxy() -> Any:
 @cap_option
 @secret_uri_option
 @get_secrets_from_env_option
+@audit_log_file_option
 @click.argument('argv', nargs=-1)
 def mcp_proxy_start(is_debug: bool = False, 
                     cap: Optional[list[ProxyCapability]] = None, 
                     secret_uri: Optional[list[str]] = None,
                     get_secrets_from_env: bool = False,
+                    audit_log_file: Optional[str] = None,
                     argv: tuple[str] = ()):
     if cap is None:
         cap = []
@@ -86,11 +97,12 @@ def mcp_proxy_start(is_debug: bool = False,
     if is_debug:
         logging.disable(logging.NOTSET)
         
-    asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, secret_uris=secret_uri, get_secrets_from_env=get_secrets_from_env, is_debug=is_debug))
+    asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, secret_uris=secret_uri, get_secrets_from_env=get_secrets_from_env, audit_log_file=audit_log_file, is_debug=is_debug))
 
 async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], 
                                  secret_uris: list[str],
                                  get_secrets_from_env: bool = False,
+                                 audit_log_file: Optional[str] = None,
                                  argv: tuple[str] = (), 
                                  is_debug: bool = False
                                  ):
@@ -118,7 +130,7 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability],
 
     if ProxyCapability.AUDIT in cap:
         logger.debug("Enabling audit logging for the MCP proxy.")
-        proxy_logger = get_audit_logger(session_id=session_id, log_level=logging.DEBUG if is_debug else logging.INFO)
+        proxy_logger = get_audit_logger(session_id=session_id, log_level=logging.DEBUG if is_debug else logging.INFO, log_file_path=audit_log_file)
     try:
         logger.debug(f"Starting MCP server with config: {stdio_params.model_dump()}")
         async with stdio_client(stdio_params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:

@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,18 @@ def audit_log_operation(audit_logger, handler_name):
     return decorator
 
 
-def get_audit_logger(session_id: str, log_level = logging.INFO) -> logging.Logger:
+def get_audit_logger(session_id: str, log_level = logging.INFO, log_file_path: Optional[str] = None) -> logging.Logger:
     file_name = f"agent_guard_core_proxy_{session_id[:5]}.log"
-    log_path = Path(f"/logs/{file_name}") if os.access("/logs", os.W_OK) else Path(file_name)
+    
+    if log_file_path:
+        # Use the provided log file path
+        log_path = Path(log_file_path)
+        # Ensure the directory exists
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        # Use the default logic
+        log_path = Path(f"/logs/{file_name}") if os.access("/logs", os.W_OK) else Path(file_name)
+    
     logger.debug(f"Using audit log path: {log_path}")
 
     audit_logger = logging.getLogger("agent_guard_core.audit")
