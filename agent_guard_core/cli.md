@@ -200,7 +200,7 @@ Group of commands to manage Agent Guard MCP proxy.
 
 - #### **Integration with Claude Desktop / Amazon Q CLI**
 
-  You can configure Claude Desktop / Amazon Q CLI to use the Agent Guard MCP Proxy by creating a configuration file:
+  You can configure Claude Desktop / Amazon Q CLI to use the Agent Guard MCP Proxy by creating a configuration file. The proxy automatically propagates environment variables defined in the `env` block to the wrapped MCP server.
 
   **Basic Configuration:**
   ```json
@@ -216,6 +216,30 @@ Group of commands to manage Agent Guard MCP proxy.
           "uvx",
           "mcp-server-fetch"
         ]
+      }
+    }
+  }
+  ```
+
+  **Configuration with Environment Variables:**
+  ```json
+  {
+    "mcpServers": {
+      "agc_proxy_with_env": {
+        "command": "agc",
+        "args": [
+          "mcp-proxy",
+          "start",
+          "--cap",
+          "audit",
+          "python",
+          "my_mcp_server.py"
+        ],
+        "env": {
+          "API_KEY": "your-api-key-here",
+          "DEBUG": "true",
+          "DATABASE_URL": "postgresql://localhost/mydb"
+        }
       }
     }
   }
@@ -263,6 +287,8 @@ Group of commands to manage Agent Guard MCP proxy.
     }
   }
   ```
+
+  **Note on Environment Variables:** All environment variables defined in the `env` block are automatically passed through to the wrapped MCP server. This allows you to configure API keys, database URLs, and other configuration values that your MCP server needs without modifying the server code.
 
 ### **secrets**
 
