@@ -35,6 +35,9 @@ Group of commands to manage Agent Guard MCP proxy.
   - `--audit-log-file, -al [FILE]`  
     Path to the audit log file. If not provided, will use default location (/logs/ or current directory).  
     Only effective when the `audit` capability is enabled.
+  - `--audit-log-file, -al [FILE]`  
+    Path to the audit log file. If not provided, will use default location (/logs/ or current directory).  
+    Only effective when the `audit` capability is enabled.
   - `ARGV`  
     Command and arguments to start an MCP server.
 
@@ -122,6 +125,30 @@ Group of commands to manage Agent Guard MCP proxy.
   - **Automatic Directory Creation**: Parent directories are created automatically if they don't exist
   - **Flexible Paths**: Supports both absolute and relative paths
   - **Session Information**: Each log file includes a unique session identifier for correlation
+  - Default behavior:
+    - `/logs/agent_guard_core_proxy_<session>.log` if `/logs` is writable
+    - `agent_guard_core_proxy_<session>.log` in the current directory otherwise
+  - Custom log file: Use `--audit-log-file` to specify a custom path
+
+  **Configuring Custom Audit Log Path:**
+
+  You can specify a custom location for audit logs using the `--audit-log-file` option:
+
+  ```
+  # Custom audit log file (absolute path)
+  agc mcp-proxy start --cap audit --audit-log-file /var/log/agent-guard/audit.log uvx mcp-server-fetch
+
+  # Custom audit log file (relative path)
+  agc mcp-proxy start --cap audit -al ./logs/my_audit.log uvx mcp-server-fetch
+
+  # Nested directories (created automatically if they don't exist)
+  agc mcp-proxy start --cap audit -al /tmp/agent-guard/logs/audit.log uvx mcp-server-fetch
+  ```
+
+  **Features:**
+  - **Automatic Directory Creation**: Parent directories are created automatically if they don't exist
+  - **Flexible Paths**: Supports both absolute and relative paths
+  - **Session Information**: Each log file includes a unique session identifier for correlation
 
   These logs include detailed information about each request and response, including:
   - The operation type (ListTools, CallTool, ListPrompts, etc.)
@@ -135,6 +162,11 @@ Group of commands to manage Agent Guard MCP proxy.
   **Note for containerized environments:** To persist audit logs from containers, mount a local directory to the container's `/logs` directory:
   ```
   docker run -v /path/to/local/logs:/logs agc mcp-proxy start --cap audit <command>
+  ```
+  
+  Alternatively, you can specify a custom log path and mount that directory:
+  ```
+  docker run -v /path/to/local/logs:/app/logs agc mcp-proxy start --cap audit --audit-log-file /app/logs/audit.log <command>
   ```
   
   Alternatively, you can specify a custom log path and mount that directory:
