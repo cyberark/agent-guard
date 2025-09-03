@@ -108,15 +108,10 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability],
                                  ):
     session_id = uuid.uuid4().hex
     logger.debug(f"Starting up proxy with session id {session_id}")
-    stdio_params: Optional[StdioServerParameters] = None
     
     if len(argv) == 0:
         raise click.BadArgumentUsage("Please provide a valid CLI to start an MCP server (i.e uvx mcp-server-fetch)")
     
-    # Pass through the current environment variables to the wrapped MCP server
-    # This ensures environment variables set by Claude Desktop (in the env block) are propagated
-    current_env = dict(os.environ)
-    stdio_params = StdioServerParameters(command=argv[0], args=argv[1:], env=current_env)
     proxy_logger: Optional[logging.Logger] = None
 
     if get_secrets_from_env:
@@ -130,6 +125,13 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability],
     if secret_uris:
         logger.debug(f"Using secret URIs: {secret_uris}")
         apply_secrets(secret_uris)
+
+    # Create StdioServerParameters AFTER secrets have been applied
+    # This ensures environment variables set by Claude Desktop (in the env block) are propagated
+    # AND any secrets that were fetched and applied above are also included
+    current_env = dict(os.environ)
+    stdio_params = StdioServerParameters(command=argv[0], args=argv[1:], env=current_env)
+    logger.debug(f"Propagating {len(current_env)} environment variables to wrapped MCP server")
 
     if ProxyCapability.AUDIT in cap:
         logger.debug("Enabling audit logging for the MCP proxy.")
