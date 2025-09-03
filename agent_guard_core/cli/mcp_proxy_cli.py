@@ -107,13 +107,16 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability],
                                  is_debug: bool = False
                                  ):
     session_id = uuid.uuid4().hex
-    logger.debug(f"Starting up oroxy with session id {session_id}")
+    logger.debug(f"Starting up proxy with session id {session_id}")
     stdio_params: Optional[StdioServerParameters] = None
     
     if len(argv) == 0:
         raise click.BadArgumentUsage("Please provide a valid CLI to start an MCP server (i.e uvx mcp-server-fetch)")
     
-    stdio_params = StdioServerParameters(command=argv[0], args=argv[1:])
+    # Pass through the current environment variables to the wrapped MCP server
+    # This ensures environment variables set by Claude Desktop (in the env block) are propagated
+    current_env = dict(os.environ)
+    stdio_params = StdioServerParameters(command=argv[0], args=argv[1:], env=current_env)
     proxy_logger: Optional[logging.Logger] = None
 
     if get_secrets_from_env:
