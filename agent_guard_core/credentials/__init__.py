@@ -1,3 +1,4 @@
+from .environment_manager import EnvironmentVariablesManager
 from .aws_secrets_manager_provider import AWSSecretsProvider
 from .conjur_secrets_provider import ConjurSecretsProvider
 from .file_secrets_provider import FileSecretsProvider
